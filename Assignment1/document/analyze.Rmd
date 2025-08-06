@@ -7,10 +7,10 @@ output: html_document
 library(tidyverse)
 library(knitr)
 
-final_df <- readRDS("Assignment1/data/cleaned/num_student_truancy_data.rds")
+final_df <- readRDS("../data/cleaned/num_student_truancy_data.rds")
 ```
 
-```{r prep, include=FALSE}
+```{r prep, include=FALSE, , message=FALSE, warning=FALSE}
 yearly_sum <- final_df %>%
     group_by(year) %>%
     summarise(
@@ -29,7 +29,7 @@ yearly_pref <- final_df %>%
     )
 ```
 
-```{r figure1, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+```{r figure1, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE, message=FALSE}
 knitr::kable(yearly_sum, caption = "Trend in the Number of Truants in Japan")
 
 ggplot(yearly_sum, aes(x = factor(year), y = total_truants_thousand)) +
@@ -44,7 +44,7 @@ ggplot(yearly_sum, aes(x = factor(year), y = total_truants_thousand)) +
     theme_classic()
 ```
 
-```{r figure2, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+```{r figure2, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(yearly_sum, aes(x = year, y = truancy_rate)) +
     geom_line() + 
     geom_point() +
@@ -60,7 +60,7 @@ ggplot(yearly_sum, aes(x = year, y = truancy_rate)) +
     theme_classic()
 ```
 
-```{r figure3, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+```{r figure3, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE, message=FALSE}
 scaling <- max(yearly_sum$total_truants_thousand) / max(yearly_sum$truancy_rate)
 ggplot(yearly_sum, aes(x = year)) +
     geom_col(aes(y = total_truants_thousand), fill = "darkgrey") +
@@ -79,7 +79,7 @@ ggplot(yearly_sum, aes(x = year)) +
     theme_classic()
 ```
 
-```{r figure4, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+```{r figure4, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE, message=FALSE}
 df_2022 <- yearly_pref %>%
     filter(year == 2022)
 
@@ -102,7 +102,7 @@ ggplot(df_2022, aes(x = truancy_rate)) +
     theme_classic()
 ```
 
-```{r figure5, fig.width=10, fig.height=7, echo=FALSE, warning=FALSE}
+```{r figure5, fig.width=10, fig.height=7, echo=FALSE, warning=FALSE, message=FALSE}
 #df_2022_hl <- df_2022 %>%
 #    mutate(highlight = ifelse(prefecture == "沖縄", "Highlight", "Normal"))
 
