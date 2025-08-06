@@ -1,0 +1,140 @@
+---
+title: "Assignment 1-1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+
+final_df <- readRDS("Assignment1/data/cleaned/num_student_truancy_data.rds")
+```
+
+```{r prep, include=FALSE}
+yearly_sum <- final_df %>%
+    group_by(year) %>%
+    summarise(
+        total_truants = sum(num_truancy),
+        total_students = sum(num_students)
+    ) %>%
+    mutate(
+        truancy_rate = (total_truants / total_students) * 100,
+        total_truants_thousand = total_truants / 1000
+    )
+
+yearly_pref <- final_df %>%
+    mutate(
+        truancy_rate = (num_truancy / num_students) * 100,
+        total_truants_thousand = num_truancy / 1000
+    )
+```
+
+```{r figure1, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+knitr::kable(yearly_sum, caption = "Trend in the Number of Truants in Japan")
+
+ggplot(yearly_sum, aes(x = factor(year), y = total_truants_thousand)) +
+    geom_col(fill = "darkgrey") + 
+    #scale_x_continuous(breaks = 2013:2022) +
+    scale_y_continuous(limits = c(0,260), expand = c(0,0)) +
+    labs(
+        title = "Figure 1: Trend in the Number of Truants in Japan",
+        x = "Year",
+        y = "Number of Truants (in thousands)"
+    ) +
+    theme_classic()
+```
+
+```{r figure2, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+ggplot(yearly_sum, aes(x = year, y = truancy_rate)) +
+    geom_line() + 
+    geom_point() +
+    geom_text(aes(label = round(truancy_rate, 1)), vjust = -1.5) +
+    scale_x_continuous(breaks = 2013:2022) +
+    scale_y_continuous(limits = c(0, 10)) +
+    labs(
+        title = "Figure 2: Trend in Truancy Rate in Japan",
+        x = "Year",
+        y = "Truancy Rate (%)"
+    ) +
+    ylim(0, max(yearly_sum$truancy_rate) * 1.1) +
+    theme_classic()
+```
+
+```{r figure3, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+scaling <- max(yearly_sum$total_truants_thousand) / max(yearly_sum$truancy_rate)
+ggplot(yearly_sum, aes(x = year)) +
+    geom_col(aes(y = total_truants_thousand), fill = "darkgrey") +
+    geom_line(aes(y = truancy_rate * scaling), color = "black") +
+    scale_x_continuous(breaks = 2013:2022) +
+    scale_y_continuous(
+        name = "Number of Truants (in thousands)",
+        limits = c(0, 260),
+        expand = c(0, 0),
+        sec.axis = sec_axis(~ . / scaling, name = "Truancy Rate (%)")
+    ) + 
+    labs(
+        title = "Figure 3: Trend in the Number of Truants and Truancy Rate in Japan",
+        x = "Year"
+    ) +
+    theme_classic()
+```
+
+```{r figure4, fig.width=8, fig.height=5, echo=FALSE, warning=FALSE}
+df_2022 <- yearly_pref %>%
+    filter(year == 2022)
+
+mean_rate_2022 <- mean(df_2022$truancy_rate)
+
+ggplot(df_2022, aes(x = truancy_rate)) + 
+    geom_histogram(binwidth = 0.5, fill = "darkgrey") +
+    geom_vline(xintercept = mean_rate_2022, color = "black", linetype = "dashed") +
+    scale_x_continuous(breaks = 7:11) +
+  scale_y_continuous(
+    breaks = c(0, 5, 10),
+    expand = c(0, 0),
+    limits = c(0, 11)
+  ) +
+    labs(
+        title = "Figure 4: Distribution of Truancy Rate in Japan (2022)",
+        x = "Truancy Rate (%)",
+        y = "Count of Prefectures"
+    ) +
+    theme_classic()
+```
+
+```{r figure5, fig.width=10, fig.height=7, echo=FALSE, warning=FALSE}
+#df_2022_hl <- df_2022 %>%
+#    mutate(highlight = ifelse(prefecture == "沖縄", "Highlight", "Normal"))
+
+pref_translate <- tibble(
+  prefecture = c("北海道", "青森", "岩手", "宮城", "秋田", "山形", "福島", "茨城", "栃木", "群馬", "埼玉", "千葉", "東京", "神奈川", "新潟", "富山", "石川", "福井", "山梨", "長野", "岐阜", "静岡", "愛知", "三重", "滋賀", "京都", "大阪", "兵庫", "奈良", "和歌山", "鳥取", "島根", "岡山", "広島", "山口", "徳島", "香川", "愛媛", "高知", "福岡", "佐賀", "長崎", "熊本", "大分", "宮崎", "鹿児島", "沖縄"),
+  prefecture_en = c("Hokkaido", "Aomori", "Iwate", "Miyagi", "Akita", "Yamagata", "Fukushima", "Ibaraki", "Tochigi", "Gumma", "Saitama", "Chiba", "Tokyo", "Kanagawa", "Niigata", "Toyama", "Ishikawa", "Fukui", "Yamanashi", "Nagano", "Gifu", "Shizuoka", "Aichi", "Mie", "Shiga", "Kyoto", "Osaka", "Hyogo", "Nara", "Wakayama", "Tottori", "Shimane", "Okayama", "Hiroshima", "Yamaguchi", "Tokushima", "Kagawa", "Ehime", "Kochi", "Fukuoka", "Saga", "Nagasaki", "Kumamoto", "Oita", "Miyazaki", "Kagoshima", "Okinawa")
+)
+highlight_prefecture_en <- "Okinawa"
+# 2. Join the translation table with your 2022 data to add the English names
+df_2022_en <- df_2022 %>%
+  left_join(pref_translate, by = "prefecture") %>%
+  # Add the highlight column using the English name
+  mutate(highlight = ifelse(prefecture_en == highlight_prefecture_en, "Highlight", "Normal"))
+
+
+ggplot(df_2022_en, aes(
+        x = fct_reorder(prefecture_en, truancy_rate),
+        y = truancy_rate,
+        fill = highlight
+    )) +
+    geom_col() +
+    scale_y_continuous(
+        breaks = seq(0, 9, by = 3), # Set breaks at 0, 3, 6, 9
+        expand = c(0, 0),          # Make bars start exactly at 0
+        limits = c(0, 11)          # Set limit to give space at the end
+    ) +
+    coord_flip() +
+    scale_fill_manual(values = c("Highlight" = "pink", "Normal" = "darkgrey"), guide = "none") +
+    labs(
+        title = "Figure 5: Truancy Rate by Prefecture in Japan (2022)",
+        x = "Prefecture",
+        y = "Truancy Rate (%)"
+    ) +
+    theme_classic()
+```
