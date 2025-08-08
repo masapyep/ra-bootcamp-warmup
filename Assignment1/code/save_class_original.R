@@ -1,8 +1,8 @@
 library(tidyverse)
 library(readxl)
 
-class_files <- list.files(path = "../data/raw/学級数", pattern = "data_", full.names = TRUE)
-class_data <- map(class_files, ~ read_excel(.x, skip = 1))
+class_files <- list.files(path = "Assignment1/data/raw/学級数", pattern = "data_", full.names = TRUE)
+class_data <- map(class_files, ~ read_excel(.x, skip = 1, col_types = "text"))
 
 translate_variables <- function(df){
     df %>%
@@ -29,16 +29,38 @@ translate_variables <- function(df){
     )
 }
 
-gregorian_year <- function(df) {
-    # 元データのヘッダー（最初の列名）から年を抽出します (例: "平成25年度")
-    first_col_name <- names(df)[1]
-    # 数字を抽出し、1988を足して西暦に変換します (平成元年 = 1989年)
-    heisei_year <- as.integer(str_extract(first_col_name, "\\d+"))
-    gregorian_year <- heisei_year + 1988
-    return(as.character(gregorian_year))
+gregorian_year <- function(era_string) {
+  
+  # Check if the string contains "令和" (Reiwa)
+  if (str_detect(era_string, "令和")) {
+    
+    # Extract the number (e.g., "1", "2", etc.)
+    era_year <- as.integer(str_extract(era_string, "\\d+"))
+    
+    # Convert to Gregorian year (Reiwa Year + 2018)
+    if (!is.na(era_year)) {
+      return(as.character(era_year + 2018))
+    }
+    
+  # If not Reiwa, check if the string contains "平成" (Heisei)
+  } else if (str_detect(era_string, "平成")) {
+    
+    # Extract the number
+    era_year <- as.integer(str_extract(era_string, "\\d+"))
+    
+    # Convert to Gregorian year (Heisei Year + 1988)
+    if (!is.na(era_year)) {
+      return(as.character(era_year + 1988))
+    }
+  }
+  
+  # If neither era is found, return NA
+  return(NA_character_)
 }
 
 class_df <- map(class_data, translate_variables)
-names(class_df) <- map_chr(class_data, gregorian_year)
+names(class_df) <- map_chr(class_data, ~ gregorian_year(names(.x)[1]))
+
+print(names(class_df))
 
 saveRDS(class_df, file = "Assignment1/data/original/class_data.rds")

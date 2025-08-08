@@ -22,4 +22,4 @@ final_df <- all_data_df %>%
   ) %>%
   mutate(truancy_rate_percent = (num_truancy / num_students) * 100)
 
-  saveRDS(final_df, file = "Assignment1/data/cleaned/num_student_truancy_data.rds")
+saveRDS(final_df, file = "Assignment1/data/cleaned/num_student_truancy_data.rds")
